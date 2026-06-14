@@ -1,0 +1,9 @@
+# Never bake secrets or local state into the image — these come from cloud
+# env vars and the persistent volume instead.
+.env
+session_state.json
+seen_projects.json
+__pycache__/
+*.pyc
+.venv/
+venv/

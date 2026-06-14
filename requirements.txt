@@ -1,0 +1,5 @@
+# Full local install: playwright is only needed for login_setup.py (one-time
+# manual login). The recurring poller itself needs only the two below.
+playwright>=1.44.0
+python-dotenv>=1.0.0
+beautifulsoup4>=4.12.0

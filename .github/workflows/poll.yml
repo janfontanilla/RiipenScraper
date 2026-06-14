@@ -1,0 +1,60 @@
+name: Riipen poller
+
+# Runs every 15 minutes (GitHub may delay scheduled runs under load).
+# workflow_dispatch lets you trigger a run manually from the Actions tab.
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+
+# Allow the job to commit the updated seen_projects.json back to the repo.
+permissions:
+  contents: write
+
+# Never run two pollers at once.
+concurrency:
+  group: riipen-poller
+  cancel-in-progress: false
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install poller dependencies (no browser)
+        run: pip install -r requirements-poller.txt
+
+      - name: Restore Riipen session from secret
+        run: printf '%s' "$SESSION_STATE_B64" | base64 -d > session_state.json
+        env:
+          SESSION_STATE_B64: ${{ secrets.SESSION_STATE_B64 }}
+
+      - name: Run poller
+        env:
+          RIIPEN_EXPERIENCE_URL: ${{ secrets.RIIPEN_EXPERIENCE_URL }}
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
+        run: python main.py
+
+      # Persist the change-detection state across runs by committing it back.
+      # Runs even if the poller failed, so partial progress isn't lost.
+      - name: Persist seen_projects.json
+        if: always()
+        run: |
+          if [[ -n "$(git status --porcelain seen_projects.json)" ]]; then
+            git config user.name "riipen-poller"
+            git config user.email "actions@users.noreply.github.com"
+            git add seen_projects.json
+            git commit -m "Update seen projects [skip ci]"
+            git push
+          else
+            echo "No change to seen_projects.json."
+          fi

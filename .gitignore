@@ -1,0 +1,9 @@
+.env
+session_state.json
+# seen_projects.json is intentionally NOT ignored: the GitHub Actions deploy
+# persists change-detection state by committing it back to the repo. It holds
+# only project IDs (nothing sensitive).
+__pycache__/
+*.pyc
+.venv/
+venv/

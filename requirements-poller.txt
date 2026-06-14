@@ -1,0 +1,5 @@
+# Minimal deps for the recurring poller (main.py) — NO browser/Playwright.
+# Use this for cloud deploys (GitHub Actions, slim containers). The session is
+# created locally with login_setup.py (which needs the full requirements.txt).
+python-dotenv>=1.0.0
+beautifulsoup4>=4.12.0
