@@ -30,10 +30,16 @@ def project_id_from_url(url: str, fallback: str) -> str:
 
     Riipen uses alphanumeric slugs, and listing URLs may carry a query string,
     so we match the slug after the resource segment off the path only.
+    Prioritize /matches/ over /experiences/ since URLs can nest both.
     """
     if url:
         path = urlparse(url).path
-        match = re.search(r"/(?:matches|projects?|experiences?)/([^/]+)", path)
+        # Try /matches/ first (the actual project)
+        match = re.search(r"/matches/([^/]+)", path)
+        if match:
+            return match.group(1)
+        # Fall back to other resource types
+        match = re.search(r"/(?:projects?|experiences?)/([^/]+)", path)
         if match:
             return match.group(1)
         segment = path.rstrip("/").split("/")[-1]
